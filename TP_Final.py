@@ -1,6 +1,12 @@
-import PySimpleGUI as sg
+import sys
+if sys.version_info[0] >= 3:
+    import PySimpleGUI as sg
+else:
+    import PySimpleGUI27 as sg
 from math import sqrt, ceil
 from random import randrange, shuffle
+from pattern.web import Wiktionary
+from pattern.es import parse
 
 def totalCaracteres(lista):
     """
@@ -317,9 +323,58 @@ def generaSopa():
     imprimeTablero(tablero)
     return tablero
 
+def definirPalabra(p,palabras):
+  repo = open('reporte.txt','a')
+  encontre = False
+  tipoW =None
+  contenido = None
+  wiki = Wiktionary(language='es')
+  article = wiki.search(p)
+  if article != None:
+    for section in article.sections:
+      if encontre != False:
+        if (section.title).upper() in ('ADJETIVO','FORMA ADJETIVA'):
+          encontre = True
+          tipoW = 'adjetivo'
+        elif (section.title).upper() in ('VERBO','VERBO TRANSITIVO','VERBO INSTRANSITIVO','FORMA VERBAL'):
+          encontre = True
+          tipoW = 'verbo'
+        elif (section.title).upper() in ('SUSTANTIVO','SUSTANTIVO FEMENINO','SUSTANTIVO MASCULINO','SUSTANTIVO PROPIO'):
+          encontre = True
+          tipoW= 'sustantivo'
+    palabras[tipoW].append(p)
+  else:
+    tipoW=""
+    print(tipoW)
+  if parse(p) != "":
+    if 'NN' in parse(p):
+        tipoP='sustantivo'
+    elif 'VB' in parse(p):
+        tipoP='verbo'
+    elif 'JJ' in parse(p):
+        tipoP='adjetivo'
+  else:
+      tipoP=""
+  if tipoW != "" and tipoP !="":
+      if tipoW != tipoP:
+          aux = str(p) + ': el tipo de palabra de Pattern no coincide con la de Wikcionario \n'
+          repo.write(aux)
+  elif tipoW == "" and tipoP != "":
+      defin = text = sg.PopupGetText('Ingresar definición para ' + str(p))
+      palabras[tipoP].append(p)
+      #palabras[tipoP].append(defin)
+  elif tipoW == "" and tipoP =="":
+      aux2 = str(p) + 'La palabra no existe en Wikcionario ni en Pattern \n'
+      repo.write(aux2)
+  return palabras
 
+palabras = {}
+palabras['sustantivo'] = []
+palabras['adjetivo'] = []
+palabras['verbo'] = []
+repo = open('reporte.txt','w')
+repo.close()
 sg.ChangeLookAndFeel('Topanga')
-cantPalabras = 0
 inicio = [
             [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color= 'white')],
             [sg.Button('Siguiente'),sg.Button('Cancelar')]
@@ -329,35 +384,38 @@ window = sg.Window('Inicio').Layout(inicio)
 event, values = window.Read()
 window.Close()
 if event == 'Siguiente':
-    while True:
-        configuracion = [
+  configuracion = [
             [sg.Text('VAMOS A PREPARAR LA SOPA DE LETRAS', text_color='red')],
             [sg.Text('Seleccione la cantidad de sustantivos adjetivos y verbos a insertar en la sopa')],
-            [sg.Text('Sustantivos'), sg.In(0,size=(2, 1),key='cSus'), sg.Text('Adjetivos'), sg.In(0, size=(2, 1),key='cAdj'),
-             sg.Text('Verbos'), sg.In(0, size=(2, 1),key='cVerb')],
-            [sg.Text('cantidad de palabras por agregar: ',key='cantPalabras'), sg.Text(cantPalabras)],
-            [sg.Text('Ingrese las palabras una a una'), sg.InputText(size=(10, 1))],
-            {sg.Button('Agregar'), sg.Button('Eliminar')},
+            [sg.Text('Sustantivos'),sg.InputText(0,size=(2, 1),key='sus'), sg.Text('Adjetivos'), sg.InputText(0, size=(2, 1),key='adj'),
+             sg.Text('Verbos'), sg.InputText(0, size=(2, 1),key='verb')],
+             [sg.Button('Aceptar')],
+            [sg.Text('Ingrese las palabras una a una'), sg.InputText(size=(10, 1),key='pal')],
+            [sg.Button('Agregar'), sg.Button('Eliminar')],
             [sg.Frame(layout=[
-                [sg.Text('Seleccione ayuda:'),sg.Checkbox(' Sin ayuda', default=True),sg.Checkbox(' Mostrar definicion'),sg.Checkbox(' Mostrar palabras')],
-                [sg.Text('Seleccione orientacion de las palabras:'),sg.Checkbox(' Horizontal',default=True),sg.Checkbox(' Vertical')],
-                [sg.Text('Seleccione forma de las letras'), sg.Checkbox(' Mayuscula', default=True), sg.Checkbox(' Minuscula')],
+                [sg.Text('Seleccione ayuda:'),sg.Checkbox(' Sin ayuda', default=True,key='sinAyuda'),sg.Checkbox(' Mostrar definicion',key='mostrarDef'),sg.Checkbox(' Mostrar palabras',key='mostrarPal')],
+                [sg.Text('Seleccione orientacion de las palabras:'),sg.Checkbox(' Horizontal',default=True,key='hori'),sg.Checkbox(' Vertical',key='ver')],
+                [sg.Text('Seleccione forma de las letras'), sg.Checkbox(' Mayuscula', default=True,key='mayus'), sg.Checkbox(' Minuscula',key='minus')],
 
                  ],
                 title='Opciones', title_color='red', relief=sg.RELIEF_SUNKEN)
              ],
-            [sg.Button('Generar sopa')]
+            [sg.Button('Generar sopa'),sg.Button('Cancelar')]
         ]
-        window2 = sg.Window('configuracion').Layout(configuracion)
-        event,valores = window2.Read()
-        cantSust = valores[0]
-        cantAdj = valores[1]
-        cantVerb = valores[2]
-        print(cantAdj)
-        cantPalabras = cantSust + cantVerb + cantAdj
-        if event == 'Cancelar' or None:
-            break
-        elif event == 'Agregar':
-            #verificar palabra
-        elif event == 'eliminar':
-            #eliminar palabra
+  window2 = sg.Window('configuracion').Layout(configuracion)
+  while True:
+    event,valores = window2.Read()
+    if event == 'Cancelar' or None:
+      break
+    elif event == 'Aceptar':
+      cantSust = int(valores['sus'])
+      cantAdj = int(valores['adj'])
+      cantVerb = int(valores['verb'])
+    elif event == 'Agregar':
+      if valores['pal'] not in (""," "):
+        palabra= valores['pal']
+        palabras = definirPalabra(palabra,palabras)
+      else:
+        sg.Popup('Ingrese una palabra')
+    elif event == 'Generar sopa':
+      print(palabras)
