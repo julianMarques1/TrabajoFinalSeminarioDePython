@@ -39,7 +39,7 @@ def largoPalabraMasLarga(lista):
     return largo
 
 
-def rellenarTablero(tablero,ABECEDARIO):
+def rellenarTablero(tablero,ABECEDARIO,v):
     """
     Se utilizan letras de la constante ABECEDARIO
     rellenarTablero : List(List(Str | Int)) -> List(List(Str))
@@ -52,7 +52,11 @@ def rellenarTablero(tablero,ABECEDARIO):
             if tablero[y][x] == 0:
                 posletra = randrange(len(ABECEDARIO))
                 letra = ABECEDARIO[posletra]
-                tablero[y][x] = letra
+                #tablero[y][x] = letra
+                if v['mayus']:
+                    tablero[y][x] = letra.upper()
+                else:
+                    tablero[y][x] = letra.lower()
     return tablero
 
 
@@ -151,18 +155,6 @@ def cualPoner(palabras):
             return (i, indice)
 
 
-def direccion():
-    """
-    Representamos direcciones con tuplas, horizontal = (1,0) y vertical = (0,1)
-    direccion : -> tuple(Int)
-    direccion devuelve, al ser llamada, una tupla que representa la direccion que tomara la palabra elegida al azar
-    """
-    a = randrange(2)
-    if a == 0:
-        return (1, 0)
-    else:
-        return (0, 1)
-
 
 def lugares(tablero, direccion, palabra):
     """
@@ -183,9 +175,6 @@ def lugares(tablero, direccion, palabra):
         maxY = anchoAlto
     elif direccion == (0, 1):
         maxX = anchoAlto
-        maxY = anchoAlto - lpalabra + 1
-    else:
-        maxX = anchoAlto - lpalabra + 1
         maxY = anchoAlto - lpalabra + 1
     for x in range(maxX):
         for y in range(maxY):
@@ -214,7 +203,7 @@ def validarPalabraLugar(tablero, posini, direccion, palabra):
     return True
 
 
-def ponerPalabra(tablero, posini, direccion, palabra):
+def ponerPalabra(tablero, posini, direccion, palabra, val):
     """
     Representamos posiciones con una tupla X,Y
     Representamos direccion con una tupla (0,1), (1,0) o (1,1)
@@ -228,7 +217,10 @@ def ponerPalabra(tablero, posini, direccion, palabra):
     tp = (posini[0], posini[1], direccion[0], direccion[1])
     for i in palabra:
         tuplas += [(tp[0], tp[1], tablero[tp[0]][tp[1]])]
-        tablero[tp[0]][tp[1]] = i
+        if val['mayus']:
+            tablero[tp[0]][tp[1]] = i.upper()
+        else:
+            tablero[tp[0]][tp[1]] = i.lower()
         tp = (tp[0] + tp[2], tp[1] + tp[3], tp[2], tp[3])
     return tuplas
 
@@ -246,7 +238,7 @@ def quitarPalabra(tablero, postupla):
     return tablero
 
 
-def ponerPalabras(tablero, palabras):
+def ponerPalabras(tablero, palabras, val):
     """
     Representamos el tablero con una matriz NxN
     ponerPalabras : List(LIst(Int)) -> List(LIst(Int | Str))
@@ -254,7 +246,10 @@ def ponerPalabras(tablero, palabras):
     """
     while faltaPoner(palabras):
         palabraAct = cualPoner(palabras)
-        direccionP = direccion()
+        if val['hori']:
+            direccionP = (1, 0)
+        else:
+            direccionP = (0 ,1)
         listaLugares = lugares(tablero, direccionP, palabraAct[0])
         shuffle(listaLugares)
         sePuede = False
@@ -262,9 +257,9 @@ def ponerPalabras(tablero, palabras):
         while not sePuede and p < len(listaLugares):
             if validarPalabraLugar(tablero, listaLugares[p], direccionP, palabraAct[0]):
                 sePuede = True
-                reemplazo = ponerPalabra(tablero, listaLugares[p], direccionP, palabraAct[0])
+                reemplazo = ponerPalabra(tablero, listaLugares[p], direccionP, palabraAct[0],val)
                 palabras[palabraAct[1]] = reemplazo
-                ponerPalabras(tablero, palabras)
+                ponerPalabras(tablero, palabras,val)
                 if palabraAct[1] < len(palabras) - 1 and type(palabras[palabraAct[1] + 1]) == str:
                     sePuede = False
                     quitarPalabra(tablero, reemplazo)
@@ -297,7 +292,7 @@ def imprimeTablero(tablero):
       window.FindElement(event).Update(button_color= ('black', 'yellow'))
 
 
-def generaSopa(p):
+def generaSopa(p,v):
     ABECEDARIO = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
                   "ñ", "o", "p", "q", "r", "s", "t", "u", "v","w","x", "y", "z")
     palabras = p
@@ -310,14 +305,14 @@ def generaSopa(p):
         tamaño = masLarga
     tamaño = tamaño + 2  # Si sumar 2 no funciona, multiplicar por 2
     tablero = generaTablero(tamaño)
-    ponerPalabras(tablero, palabras)
+    ponerPalabras(tablero, palabras,v)
     contador = 1
     while type(palabras[0]) == str and contador < len(palabras):
         palabras = palabras[1:] + palabras[0]
-        ponerPalabras(tablero, palabras)
+        ponerPalabras(tablero, palabras,v)
     if type(palabras[0]) == str:
         return "NO SE PUDO"
-    tablero = rellenarTablero(tablero,ABECEDARIO)
+    tablero = rellenarTablero(tablero,ABECEDARIO,v)
     imprimeTablero(tablero)
     return tablero
 
@@ -394,10 +389,10 @@ if event == 'Siguiente':
             [sg.Text('Ingrese las palabras una a una'), sg.InputText(size=(10, 1),key='pal')],
             [sg.Button('Agregar'), sg.Button('Eliminar')],
             [sg.Frame(layout=[
-                [sg.Text('Seleccione ayuda:'),sg.Checkbox(' Sin ayuda', default=True,key='sinAyuda'),sg.Checkbox(' Mostrar definicion',key='mostrarDef'),sg.Checkbox(' Mostrar palabras',key='mostrarPal')],
-                [sg.Text('Seleccione orientacion de las palabras:'),sg.Checkbox(' Horizontal',default=True,key='hori'),sg.Checkbox(' Vertical',key='ver')],
-                [sg.Text('Seleccione forma de las letras'), sg.Checkbox(' Mayuscula', default=True,key='mayus'), sg.Checkbox(' Minuscula',key='minus')],
-
+                [sg.Text('Seleccione ayuda:'),sg.Radio(' Sin ayuda',"Radio1", default=True,key='sinAyuda'),sg.Radio(' Mostrar definicion',"Radio1",key='mostrarDef'),
+                 sg.Radio(' Mostrar palabras',"Radio1",key='mostrarPal')],
+                [sg.Text('Seleccione orientacion de las palabras:'),sg.Radio(' Horizontal',"Radio2",default=True,key='hori'),sg.Radio(' Vertical',"Radio2",key='ver')],
+                [sg.Text('Seleccione forma de las letras'), sg.Radio(' Mayuscula',"Radio3", default=True,key='mayus'), sg.Radio(' Minuscula',"Radio3",key='minus')],
                  ],
                 title='Opciones', title_color='red', relief=sg.RELIEF_SUNKEN)
              ],
@@ -455,4 +450,4 @@ if event == 'Siguiente':
               aux = choice(ver)
               listaPalabras.append(aux)
               ver.remove(aux)
-      generaSopa(listaPalabras)
+      generaSopa(listaPalabras,valores)
