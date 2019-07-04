@@ -4,7 +4,7 @@ if sys.version_info[0] >= 3:
 else:
     import PySimpleGUI27 as sg
 from math import sqrt, ceil
-from random import randrange, shuffle
+from random import randrange, shuffle,choice
 from pattern.web import Wiktionary
 from pattern.es import parse
 
@@ -275,34 +275,32 @@ def ponerPalabras(tablero, palabras):
 
 
 def imprimeTablero(tablero):
-    """
-    """
-    while True:
-        layout=[[sg.Button('Termine')],]
-        pos = 0
-        largoAlto = len(tablero)
-        claves = []
-        for n in range(largoAlto * largoAlto):
-            claves.append(str(n))
-        for y in range(largoAlto):
-            row = []
-            for x in range(largoAlto):
-                row.append(sg.Button(tablero[x][y],size=(4,1), pad=(1,1) ,button_color=('black', 'white'),
+  layout=[[sg.Button('Termine')]]
+  pos = 0
+  largoAlto = len(tablero)
+  claves = []
+  for n in range(largoAlto * largoAlto):
+    claves.append(str(n))
+  for y in range(largoAlto):
+    row = []
+    for x in range(largoAlto):
+      row.append(sg.Button(tablero[x][y],size=(4,1), pad=(1,1) ,button_color=('black', 'white'),
                                      enable_events=True, key=claves[pos]))
-                pos += 1
-            layout.append(row)
-        window = sg.Window('Table', grab_anywhere=False).Layout(layout)
-        event, values = window.Read()
-        if event == 'Termine' or None:
-            break
-        elif event in claves:
-            window.FindElement(event).Update(button_color= ('black', 'yellow'))
+      pos += 1
+    layout.append(row)
+  window = sg.Window('Table', grab_anywhere=False).Layout(layout)
+  while True:
+    event, values = window.Read()
+    if event == 'Termine' or None:
+      break
+    elif event in claves:
+      window.FindElement(event).Update(button_color= ('black', 'yellow'))
 
 
-def generaSopa():
+def generaSopa(p):
     ABECEDARIO = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
                   "ñ", "o", "p", "q", "r", "s", "t", "u", "v","w","x", "y", "z")
-    palabras = generaListaPalabras()
+    palabras = p
     palabras = eliminaIncluidos(palabras)
     tamaño = totalCaracteres(palabras)
     tamaño = sqrt(tamaño)
@@ -332,16 +330,18 @@ def definirPalabra(p,palabras):
   article = wiki.search(p)
   if article != None:
     for section in article.sections:
-      if encontre != False:
+      if encontre == False:
         if (section.title).upper() in ('ADJETIVO','FORMA ADJETIVA'):
           encontre = True
           tipoW = 'adjetivo'
         elif (section.title).upper() in ('VERBO','VERBO TRANSITIVO','VERBO INSTRANSITIVO','FORMA VERBAL'):
           encontre = True
           tipoW = 'verbo'
-        elif (section.title).upper() in ('SUSTANTIVO','SUSTANTIVO FEMENINO','SUSTANTIVO MASCULINO','SUSTANTIVO PROPIO'):
+        elif (section.title).upper() in ('SUSTANTIVO','SUSTANTIVO FEMENINO','SUSTANTIVO MASCULINO','SUSTANTIVO PROPIO','SUSTANTIVO MASCULINO Y FEMENINO','SUSTANTIVO FEMENINO Y MASCULINO'):
           encontre = True
           tipoW= 'sustantivo'
+
+    print("tipo W=" + str(tipoW))
     palabras[tipoW].append(p)
   else:
     tipoW=""
@@ -372,6 +372,7 @@ palabras = {}
 palabras['sustantivo'] = []
 palabras['adjetivo'] = []
 palabras['verbo'] = []
+listaPalabras = []
 repo = open('reporte.txt','w')
 repo.close()
 sg.ChangeLookAndFeel('Topanga')
@@ -418,4 +419,40 @@ if event == 'Siguiente':
       else:
         sg.Popup('Ingrese una palabra')
     elif event == 'Generar sopa':
-      print(palabras)
+      s = palabras['sustantivo']
+      ad = palabras['adjetivo']
+      ver = palabras['verbo']
+      if s:
+        if len(s) >= cantSust:
+            for i in range(cantSust):
+                aux = choice(s)
+                listaPalabras.append(aux)
+                s.remove(aux)
+        else:
+          for i in range(len(s)):
+              aux = choice(s)
+              listaPalabras.append(aux)
+              s.remove(aux)
+      if ad:
+        if len(ad) >= cantAdj:
+            for i in range(cantAdj):
+                aux = choice(ad)
+                listaPalabras.append(aux)
+                ad.remove(aux)
+        else:
+          for i in len(ad):
+              aux = choice(ad)
+              listaPalabras.append(aux)
+              ad.remove(aux)
+      if ver:
+        if len(ver) >= cantVerb:
+            for i in range(cantSust):
+                aux = choice(ver)
+                listaPalabras.append(aux)
+                ver.remove(aux)
+        else:
+          for i in len(ver):
+              aux = choice(ver)
+              listaPalabras.append(aux)
+              ver.remove(aux)
+      generaSopa(listaPalabras)
