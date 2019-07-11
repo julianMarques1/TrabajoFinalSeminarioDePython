@@ -155,7 +155,6 @@ def cualPoner(palabras):
             return (i, indice)
 
 
-
 def lugares(tablero, direccion, palabra):
     """
     Representamos los lugares posibles con una lista de tuplas, cada tupla representa un par coordenado X,Y
@@ -269,8 +268,12 @@ def ponerPalabras(tablero, palabras, val):
     return tablero
 
 
-def imprimeTablero(tablero):
-  layout=[[sg.Button('Termine')]]
+def imprimeTablero(tablero, val):
+  layout=[[sg.Button('Termine')],
+          [sg.Button('Sustantivos', button_color=(val['col_sus'],'black'))],
+          sg.Button('Adjetivos', button_color=(val['col_adj'],'black')),
+          sg.Button('Verbos', button_color=(val['col_varb'],'black'))
+          ]
   pos = 0
   largoAlto = len(tablero)
   claves = []
@@ -279,7 +282,7 @@ def imprimeTablero(tablero):
   for y in range(largoAlto):
     row = []
     for x in range(largoAlto):
-      row.append(sg.Button(tablero[x][y],size=(4,1), pad=(1,1) ,button_color=('black', 'white'),
+      row.append(sg.Button(tablero[x][y],size=(4,1), pad=(1,1), button_color=('black', 'white'),
                                      enable_events=True, key=claves[pos]))
       pos += 1
     layout.append(row)
@@ -289,7 +292,7 @@ def imprimeTablero(tablero):
     if event == 'Termine' or None:
       break
     elif event in claves:
-      window.FindElement(event).Update(button_color= ('black', 'yellow'))
+      window.FindElement(event).Update(button_color=(val['col_sus'], 'yellow'))
 
 
 def generaSopa(p,v):
@@ -313,7 +316,7 @@ def generaSopa(p,v):
     if type(palabras[0]) == str:
         return "NO SE PUDO"
     tablero = rellenarTablero(tablero,ABECEDARIO,v)
-    imprimeTablero(tablero)
+    imprimeTablero(tablero, v)
     return tablero
 
 def definirPalabra(p,palabras):
@@ -372,7 +375,7 @@ repo = open('reporte.txt','w')
 repo.close()
 sg.ChangeLookAndFeel('Topanga')
 inicio = [
-            [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color= 'white')],
+            [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color='white')],
             [sg.Button('Siguiente'),sg.Button('Cancelar')]
          ]
 
@@ -380,7 +383,7 @@ window = sg.Window('Inicio').Layout(inicio)
 event, values = window.Read()
 window.Close()
 if event == 'Siguiente':
-  configuracion = [
+    configuracion = [
             [sg.Text('VAMOS A PREPARAR LA SOPA DE LETRAS', text_color='red')],
             [sg.Text('Seleccione la cantidad de sustantivos adjetivos y verbos a insertar en la sopa')],
             [sg.Text('Sustantivos'),sg.InputText(0,size=(2, 1),key='sus'), sg.Text('Adjetivos'), sg.InputText(0, size=(2, 1),key='adj'),
@@ -389,65 +392,73 @@ if event == 'Siguiente':
             [sg.Text('Ingrese las palabras una a una'), sg.InputText(size=(10, 1),key='pal')],
             [sg.Button('Agregar'), sg.Button('Eliminar')],
             [sg.Frame(layout=[
-                [sg.Text('Seleccione ayuda:'),sg.Radio(' Sin ayuda',"Radio1", default=True,key='sinAyuda'),sg.Radio(' Mostrar definicion',"Radio1",key='mostrarDef'),
+                [sg.Text('Seleccione ayuda:'),sg.Radio(' Sin ayuda',"Radio1", default=True,key='sinAyuda'),
+                 sg.Radio(' Mostrar definicion',"Radio1",key='mostrarDef'),
                  sg.Radio(' Mostrar palabras',"Radio1",key='mostrarPal')],
                 [sg.Text('Seleccione orientacion de las palabras:'),sg.Radio(' Horizontal',"Radio2",default=True,key='hori'),sg.Radio(' Vertical',"Radio2",key='ver')],
                 [sg.Text('Seleccione forma de las letras'), sg.Radio(' Mayuscula',"Radio3", default=True,key='mayus'), sg.Radio(' Minuscula',"Radio3",key='minus')],
                  ],
                 title='Opciones', title_color='red', relief=sg.RELIEF_SUNKEN)
              ],
+            [sg.Text('Seleccione el color de los sustantivos :'),
+             sg.InputCombo(('red','black','yellow','pink','blue','brown','lightpink','green',),default_value='red',key='col_sust')],
+            [sg.Text('Seleccione el color de los adjetivos :'),
+             sg.InputCombo(('red','black','yellow','pink','blue','brown','lightpink','green'),default_value='blue',key='col_adj')],
+            [sg.Text('Seleccione el color de los verbos :'),
+             sg.InputCombo(('red','black','yellow','pink','blue','brown','lightpink','green'),default_value='yellow',key='col_verb')],
             [sg.Button('Generar sopa'),sg.Button('Cancelar')]
-        ]
-  window2 = sg.Window('configuracion').Layout(configuracion)
-  while True:
-    event,valores = window2.Read()
-    if event == 'Cancelar' or None:
-      break
-    elif event == 'Aceptar':
-      cantSust = int(valores['sus'])
-      cantAdj = int(valores['adj'])
-      cantVerb = int(valores['verb'])
-    elif event == 'Agregar':
-      if valores['pal'] not in (""," "):
-        palabra= valores['pal']
-        palabras = definirPalabra(palabra,palabras)
-      else:
-        sg.Popup('Ingrese una palabra')
-    elif event == 'Generar sopa':
-      s = palabras['sustantivo']
-      ad = palabras['adjetivo']
-      ver = palabras['verbo']
-      if s:
-        if len(s) >= cantSust:
-            for i in range(cantSust):
-                aux = choice(s)
-                listaPalabras.append(aux)
-                s.remove(aux)
-        else:
-          for i in range(len(s)):
-              aux = choice(s)
-              listaPalabras.append(aux)
-              s.remove(aux)
-      if ad:
-        if len(ad) >= cantAdj:
-            for i in range(cantAdj):
-                aux = choice(ad)
-                listaPalabras.append(aux)
-                ad.remove(aux)
-        else:
-          for i in len(ad):
-              aux = choice(ad)
-              listaPalabras.append(aux)
-              ad.remove(aux)
-      if ver:
-        if len(ver) >= cantVerb:
-            for i in range(cantSust):
-                aux = choice(ver)
-                listaPalabras.append(aux)
-                ver.remove(aux)
-        else:
-          for i in len(ver):
-              aux = choice(ver)
-              listaPalabras.append(aux)
-              ver.remove(aux)
-      generaSopa(listaPalabras,valores)
+    ]
+
+    window2 = sg.Window('configuracion').Layout(configuracion)
+    while True:
+        event,valores = window2.Read()
+        if event == 'Cancelar' or None:
+            break
+        elif event == 'Aceptar':
+            cantSust = int(valores['sus'])
+            cantAdj = int(valores['adj'])
+            cantVerb = int(valores['verb'])
+        elif event == 'Agregar':
+            if valores['pal'] not in (""," "):
+                palabra= valores['pal']
+                palabras = definirPalabra(palabra,palabras)
+            else:
+              sg.Popup('Ingrese una palabra')
+        elif event == 'Generar sopa':
+          s = palabras['sustantivo']
+          ad = palabras['adjetivo']
+          ver = palabras['verbo']
+          if s:
+            if len(s) >= cantSust:
+                for i in range(cantSust):
+                    aux = choice(s)
+                    listaPalabras.append(aux)
+                    s.remove(aux)
+            else:
+              for i in range(len(s)):
+                  aux = choice(s)
+                  listaPalabras.append(aux)
+                  s.remove(aux)
+          if ad:
+            if len(ad) >= cantAdj:
+                for i in range(cantAdj):
+                    aux = choice(ad)
+                    listaPalabras.append(aux)
+                    ad.remove(aux)
+            else:
+              for i in len(ad):
+                  aux = choice(ad)
+                  listaPalabras.append(aux)
+                  ad.remove(aux)
+          if ver:
+            if len(ver) >= cantVerb:
+                for i in range(cantSust):
+                    aux = choice(ver)
+                    listaPalabras.append(aux)
+                    ver.remove(aux)
+            else:
+              for i in len(ver):
+                  aux = choice(ver)
+                  listaPalabras.append(aux)
+                  ver.remove(aux)
+          generaSopa(listaPalabras,valores)
