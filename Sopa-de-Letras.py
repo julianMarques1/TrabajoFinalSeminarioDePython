@@ -1,13 +1,33 @@
 import sys
-if sys.version_info[0] >= 3:
-    import PySimpleGUI as sg
-else:
-    import PySimpleGUI27 as sg
 from math import sqrt, ceil
 from random import randrange, shuffle,choice
 from pattern.web import Wiktionary
 from pattern.es import verbs, tag, spelling, lexicon
 import string
+import json
+if sys.version_info[0] >= 3:
+    import PySimpleGUI as sg
+else:
+    import PySimpleGUI27 as sg
+
+
+def LookAndFeel():
+    layoutT = [
+        [sg.Text('¿En que oficina se encuentra?')],
+        [sg.InputText(key='ofi')]
+    ]
+    windowT = sg.Window('seleccion de oficina').Layout(layoutT)
+    event,val = windowT.Read()
+    archivo = open('datos-oficina.json','r')
+    datos = json.load(archivo)
+    if val['ofi'] in datos:
+        if val['ofi'][0] > 25:
+            return 'Reds'
+        elif val['ofi'][0] < 15:
+            return 'NeutralBlue'
+        else:
+            return 'SandyBeach'
+    archivo.close()
 
 
 def totalCaracteres(lista):
@@ -271,7 +291,8 @@ def ponerPalabras(tablero, palabras, val):
     return tablero
 
 
-def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb):
+def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
+  sg.ChangeLookAndFeel(col)
   c = None
   ayu = []
   contS = 0
@@ -402,7 +423,7 @@ def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb):
 
 
 
-def generaSopa(p,v,cantSust,cantAdj,cantVerb):
+def generaSopa(p,v,cantSust,cantAdj,cantVerb,colour):
     ABECEDARIO = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
                   "ñ", "o", "p", "q", "r", "s", "t", "u", "v","w","x", "y", "z")
 
@@ -424,7 +445,7 @@ def generaSopa(p,v,cantSust,cantAdj,cantVerb):
     if type(palabras[0]) == str:
         return "NO SE PUDO"
     tablero,filas,columnas = rellenarTablero(tablero,ABECEDARIO,v)
-    imprimeTablero(tablero,v,p,filas,columnas,cantSust,cantAdj,cantVerb)
+    imprimeTablero(tablero,v,p,filas,columnas,cantSust,cantAdj,cantVerb,colour)
     return tablero
 
 def clasificar(palabra):
@@ -497,8 +518,9 @@ palabras['adjetivo'] = []
 palabras['verbo'] = []
 listaPalabras = []
 repo = open('reporte.txt','w')
+color = LookAndFeel()
+sg.ChangeLookAndFeel(color)
 repo.close()
-sg.ChangeLookAndFeel('Topanga')
 inicio = [
             [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color= 'white')],
             [sg.Button('Siguiente'),sg.Button('Cancelar')]
@@ -605,6 +627,6 @@ if event == 'Siguiente':
                 aux = choice(ver)
                 listaPalabras.append(aux)
                 ver.remove(aux)
-        generaSopa(listaPalabras,valores,cantSust,cantAdj,cantVerb)
+        generaSopa(listaPalabras,valores,cantSust,cantAdj,cantVerb,color)
       else:
         sg.Popup("No ha ingresado palabras")
