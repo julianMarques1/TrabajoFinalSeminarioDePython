@@ -5,6 +5,7 @@ from pattern.web import Wiktionary
 from pattern.es import verbs, tag, spelling, lexicon
 import string
 import json
+from os import listdir,getcwd
 if sys.version_info[0] >= 3:
     import PySimpleGUI as sg
 else:
@@ -17,6 +18,8 @@ def LookAndFeel():
     Se utilizan los datos del archivo 'datos-oficina' para calcular el promedio de temperatura a partir de los daots obtenidos
     de la raspberry. A partir de este promedio se selecciona un look and feel que se retorna como valor para una variable
     """
+    tot = 0
+    cant = 0
     layoutT = [
         [sg.Text('¿En que oficina se encuentra?')],
         [sg.InputText(key='ofi')],
@@ -25,16 +28,31 @@ def LookAndFeel():
     windowT = sg.Window('seleccion de oficina').Layout(layoutT)
     events,val = windowT.Read()
     if events =='Aceptar':
-        arch = open('datos-oficinas.json','r')
+        try:
+          arch = open('datos-oficinas.json','r')
+        except IOError:
+          windowT.Close()
+          sg.Popup('El archivo JSON datos-oficinas.json no existe o no tiene permisos para abrirlo.\n' + 'Se utilizará un tema por defecto')
+          return 'Topanga'
         datos = json.load(arch)
-        if val['ofi'] in datos:
-            if val['ofi'][:][2]/val['ofi'][:].length > 25:
+        arch.close()
+        print(datos)
+        windowT.Close()
+        if val['ofi'] in datos.keys():
+            k = val['ofi']
+            for elem in datos[k]:
+              tot += elem['temp']
+              cant += 1
+            prom = tot/cant
+            if prom > 25:
                 return 'Reds'
-            elif val['ofi'][:][2]/val['ofi'][:].length < 15:
+            elif prom < 15:
                 return 'NeutralBlue'
             else:
                 return 'SandyBeach'
-    arch.close()
+        else:
+            sg.Popup("La oficina no existe en el archivo JSON, se utilizará un tema por defecto")
+            return 'Topanga'
 
 
 def totalCaracteres(lista):
@@ -298,7 +316,7 @@ def ponerPalabras(tablero, palabras, val):
     return tablero
 
 
-def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
+def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,definiciones,col,listaPorTipo):
   """
 
     ImprimeTablero muestra el tablero en una interfaz gafrica en el que cada boton es una letra. Permite jugar a la sopa
@@ -311,7 +329,7 @@ def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
   contS = 0
   contA = 0
   contV = 0
-  layout=[[sg.Button('Termine'),sg.Button('Salir')],
+  layout=[[sg.Button('Termine',key='Termine'),sg.Button('Salir')],
           [sg.Button('Sustantivos', button_color=(val['col_sust'],'black'))],
           [sg.Button('Adjetivos', button_color=(val['col_adj'],'black'))],
           [sg.Button('Verbos', button_color=(val['col_verb'],'black'))]
@@ -369,6 +387,7 @@ def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
       i = 0
       d = {}
       d['letras'] = []
+      finalP = p.copy()
       if val['ver']:
         for c in range(columnas):
           aux = []
@@ -392,13 +411,18 @@ def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
         print(ad)
         print(ver)
         print(cantSust,cantAdj,cantVerb)
-        for ele in p:
-            if ele.lower() in su.lower():
-              contS+=1
-            elif ele.lower() in ad.lower():
-              contA+=1
-            elif ele.lower() in ver.lower():
-              contV+=1
+        for ele in listaPorTipo[0]:
+          if ele.lower() in su.lower():
+            finalP.remove(ele)
+            contS+=1
+        for ele in listaPorTipo[1]:
+          if ele.lower() in ad.lower():
+            finalP.remove(ele)
+            contA+=1
+        for ele in listaPorTipo[2]:
+          if ele.lower() in ver.lower():
+            finalP.remove(ele)
+            contV+=1
       if val['hori']:
         for c in range(columnas):
           for f in range(filas):
@@ -413,21 +437,33 @@ def imprimeTablero(tablero,val,p,filas,columnas,cantSust,cantAdj,cantVerb,col):
         print(su)
         print(ad)
         print(ver)
-        for ele in p:
-            if ele.lower() in su.lower():
-              contS+=1
-            elif ele.lower() in ad.lower():
-              contA+=1
-            elif ele.lower() in ver.lower():
-              contV+=1
+        for ele in listaPorTipo[0]:
+          if ele.lower() in su.lower():
+            finalP.remove(ele)
+            contS+=1
+        for ele in listaPorTipo[1]:
+          if ele.lower() in ad.lower():
+            finalP.remove(ele)
+            contA+=1
+        for ele in listaPorTipo[2]:
+          if ele.lower() in ver.lower():
+            finalP.remove(ele)
+            contV+=1
       print(contS,contA,contV)
+      print(finalP)
       if contS == cantSust and contA == cantAdj and contV == cantVerb :
         sg.Popup('FELICIDADES, LA SOPA DE LETRAS HA SIDO COMPLETADA')
+        window.FindElement('Termine').Update(disabled=True)
       else:
-        sg.Popup('HAS PERDIDO,FIN DEL JUEGO')
+        cad = ', '.join(finalP)
+        sg.Popup('Resultados','¡HAS PERDIDO!\n' + 'Faltaron encontrar y marcar correctamente las siguientes palabras:\n' + cad + '\nFIN DEL JUEGO')
+        window.FindElement('Termine').Update(disabled=True)
 
+def generaSopa(p,v,cantSust,cantAdj,cantVerb,definiciones,colour,listaPorTipo):
 
-def generaSopa(p,v,cantSust,cantAdj,cantVerb,definiciones,colour):
+    """
+      Realiza las distintas invocaciones para generar la sopa de letras.
+    """
     ABECEDARIO = ("a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n",
                   "ñ", "o", "p", "q", "r", "s", "t", "u", "v","w","x", "y", "z")
 
@@ -447,34 +483,50 @@ def generaSopa(p,v,cantSust,cantAdj,cantVerb,definiciones,colour):
         palabras = palabras[1:] + palabras[0]
         ponerPalabras(tablero, palabras,v)
     if type(palabras[0]) == str:
-        return "NO SE PUDO"
+        sg.Popup("NO SE PUDO")
     tablero,filas,columnas = rellenarTablero(tablero,ABECEDARIO,v)
-    imprimeTablero(tablero,v,p,filas,columnas,cantSust,cantAdj,cantVerb,definiciones,colour)
+    imprimeTablero(tablero,v,p,filas,columnas,cantSust,cantAdj,cantVerb,definiciones,colour,listaPorTipo)
 
 def clasificar(palabra):
-	#print( tag(palabra, tokenize=True, encoding='utf-8',tagset = 'UNIVERSAL'))
-	print(tag(palabra, tokenize=True, encoding='utf-8'))
-	a = tag(palabra, tokenize=True, encoding='utf-8')
-	aux =a[0][1]
-	if aux == 'JJ':
-		return 'adjetivo'
-	elif aux == 'NN':
-		return 'sustantivo'
-	elif aux == 'VB':
-		return 'verbo'
+  """
+    Clasifica la palabra recibida en base al tipo definido por Pattern.
+
+  """
+  print(tag(palabra, tokenize=True, encoding='utf-8'))
+  a = tag(palabra, tokenize=True, encoding='utf-8')
+  aux =a[0][1]
+  if aux == 'JJ':
+    return 'adjetivo'
+  elif aux == 'NN':
+    return 'sustantivo'
+  elif aux == 'VB':
+    return 'verbo'
 
 def definirPalabra(p,palabras,definiciones):
+
+  """
+      Define el tipo de palabra y su definición en base a Wikcionario.
+      Se toma como definición la sección ETIMOLOGÍA de Wikcionario, de no tenerla se pide que se ingrese una definición.
+      Si la palabra no existe en Wikcionario utiliza el tipo que retorna Pattern y pide que se ingrese una definición.
+      De no encontrar la palabra en ninguno de los dos recursos se informa de la situación y no se considera para la sopa.
+      El método retorna dos diccionarios: uno con palabras y otro con definiciones.
+      EL método también escribe en el archivo reporte.txt las situaciones a informar según pide el trabajo.
+  """
   repo = open('reporte.txt','a')
   encontre = False
+  hayDef = False
   tipoW =None
   contenido = None
+  defi = None
   wiki = Wiktionary(language='es')
   article = wiki.search(p)
   if article != None:
     for section in article.sections:
-      if (section.title).upper() == 'ETIMOLOGÍA':
-        defi = section.content[21:]
-        print(defi)
+      if hayDef == False:
+        if (section.title).upper() == 'ETIMOLOGÍA':
+          defi = section.content[21:]
+          hayDef= True
+          print(defi)
       if encontre == False:
         if (section.title).upper() in ('ADJETIVO','FORMA ADJETIVA'):
           encontre = True
@@ -490,6 +542,10 @@ def definirPalabra(p,palabras,definiciones):
       palabras[tipoW].append(p)
       if defi != None:
         definiciones[p] = defi
+      else:
+        defi = sg.PopupGetText('No se encontró una definición en Wikcionario para ' + str(p) + ' .Ingrese una: ')
+        if defi != None and defi not in (""," "):
+          definiciones[p] = defi
     else:
       sg.Popup("Ya ha ingresado esa palabra")
       return palabras
@@ -504,6 +560,7 @@ def definirPalabra(p,palabras,definiciones):
   if tipoW == "" and tipoP =="":
       aux2 = str(p) + ': La palabra no existe en Wikcionario ni en Pattern \n'
       repo.write(aux2)
+      sg.Popup(aux2)
   elif tipoW == "" and tipoP != "":
     if p not in palabras[tipoP]:
       palabras[tipoP].append(p)
@@ -514,30 +571,33 @@ def definirPalabra(p,palabras,definiciones):
       sg.Popup("Ya ha ingresado esa palabra")
       return palabras
   elif tipoW != tipoP:
-          aux = str(p) + ': el tipo de palabra de Pattern no coincide con la de Wikcionario \n'
-          repo.write(aux)
+    aux = str(p) + ': el tipo de palabra de Pattern no coincide con la de Wikcionario \n'
+    repo.write(aux)
+    sg.Popup(aux)
   return palabras,definiciones
 
 
-palabras = {}
-palabras['sustantivo'] = []
-palabras['adjetivo'] = []
-palabras['verbo'] = []
-listaPalabras = []
-definiciones = {}
-repo = open('reporte.txt','w')
-color = LookAndFeel()
-sg.ChangeLookAndFeel(color)
-repo.close()
-inicio = [
-            [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color= 'white')],
-            [sg.Button('Siguiente'),sg.Button('Cancelar')]
-         ]
-
-window = sg.Window('Inicio').Layout(inicio)
-event, values = window.Read()
-window.Close()
-if event == 'Siguiente':
+def configuracion():
+  """
+      Genera una interfaz donde el usuario podrá ingresar la cantidad de palabras a buscar, las palabras a aparecer en la sopa,
+      la orientación de las palabras en la sopa, si la letras en la sopa apareceran en mayúsculas o minúsculas y los colores que
+      corresponden a cada tipo de palabra (sustantivo,adjetivo,verbo).
+      Se guardará en un archiso JSON la configuración ingresada.
+  """
+  palabras = {}
+  palabras['sustantivo'] = []
+  palabras['adjetivo'] = []
+  palabras['verbo'] = []
+  listaPalabras = []
+  listaSust = []
+  listaAdj = []
+  listaVer = []
+  listaPorTipo = []
+  definiciones = {}
+  config = {}
+  totS = 0
+  totA = 0
+  totV = 0
   configuracion = [
             [sg.Text('VAMOS A PREPARAR LA SOPA DE LETRAS', text_color='red')],
             [sg.Text('Seleccione la cantidad de sustantivos adjetivos y verbos a insertar en la sopa')],
@@ -605,39 +665,97 @@ if event == 'Siguiente':
         if s or ad or ver:
           if s:
             if len(s) >= cantSust:
+                totS = cantSust
                 for i in range(cantSust):
                     aux = choice(s)
+                    listaSust.append(aux)
                     listaPalabras.append(aux)
                     s.remove(aux)
             else:
+              totS = len(s)
               for i in range(len(s)):
                   aux = choice(s)
+                  listaSust.append(aux)
                   listaPalabras.append(aux)
                   s.remove(aux)
           if ad:
             if len(ad) >= cantAdj:
+                totA= cantAdj
                 for i in range(cantAdj):
                     aux = choice(ad)
+                    listaAdj.append(aux)
                     listaPalabras.append(aux)
                     ad.remove(aux)
             else:
+              totA = len(ad)
               for i in range(len(ad)):
                   aux = choice(ad)
+                  listaAdj.append(aux)
                   listaPalabras.append(aux)
                   ad.remove(aux)
           if ver:
             if len(ver) >= cantVerb:
-                for i in range(cantVerb):
-                    aux = choice(ver)
-                    listaPalabras.append(aux)
-                    ver.remove(aux)
+              totV= cantVerb
+              for i in range(cantVerb):
+                aux = choice(ver)
+                listaVer.append(aux)
+                listaPalabras.append(aux)
+                ver.remove(aux)
             else:
+              totV = len(ver)
               for i in range(len(ver)):
-                  aux = choice(ver)
-                  listaPalabras.append(aux)
-                  ver.remove(aux)
-          generaSopa(listaPalabras,valores,cantSust,cantAdj,cantVerb,definiciones,color)
+                aux = choice(ver)
+                listaVer.append(aux)
+                listaPalabras.append(aux)
+                ver.remove(aux)
+          listaPorTipo.append(listaSust.copy())
+          listaPorTipo.append(listaAdj.copy())
+          listaPorTipo.append(listaVer.copy())
+          config = valores.copy()
+          config['sus'] = totS
+          config['adj'] = totA
+          config['verb']= totV
+          config['listaP'] = listaPalabras.copy()
+          config['listaD'] = definiciones.copy()
+          config['listaPP'] = listaPorTipo.copy()
+          print(config)
+          with open('configuración.json','w') as file:
+            json.dump(config,file,indent=4)
+          generaSopa(listaPalabras,valores,totS,totA,totV,definiciones,color,listaPorTipo)
         else:
           sg.Popup("No ha ingresado palabras")
       else:
         sg.Popup("Los colores para los tipos de palabras no pueden repetirse")
+
+
+
+repo = open('reporte.txt','w')
+color = LookAndFeel()
+print(color)
+sg.ChangeLookAndFeel(color)
+repo.close()
+inicio = [
+            [sg.Text('BIENVENIDO A LA SOPA DE LETRAS', text_color= 'white')],
+            [sg.Button('Jugar'),sg.Button('Configuración')]
+         ]
+
+window = sg.Window('Inicio').Layout(inicio)
+event, values = window.Read()
+window.Close()
+if event == 'Configuración':
+  configuracion()
+elif event == 'Jugar':
+  r = getcwd()
+  contenido = listdir(r)
+  print(contenido)
+  if 'configuración.json' in contenido:
+    try:
+      with open('configuración.json','r') as file:
+        data = json.load(file)
+    except IOError:
+      sg.Popup('El archivo configuración.json no existe o no tiene permisos para abrirlo.\n'+'Deberá definir una configuración')
+    print(data)
+    generaSopa(data['listaP'],data,data['sus'],data['adj'],data['verb'],data['listaD'],color,data['listaPP'])
+  else:
+    sg.Popup('No hay una configuración definida, debe definir una configuración')
+    configuracion()
