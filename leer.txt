@@ -1,8 +1,8 @@
 SEMINARIO DE LENGUAJE PYTHON
 
 INTEGRANTES:
-	° Marques de Abrantes Julian
-	° Marchesani Ramiro
+	Â° Marques de Abrantes Julian
+	Â° Marchesani Ramiro
 
 ESPECIFICACIONES SOPA DE LETRAS:
 
@@ -18,5 +18,5 @@ caso de cometer un error. Al finalizar se podra pulsar el boton "Termine", el cu
 que faltaron encontrar, en caso de faltar alguna, o un mensaje de felicitacion en caso de completar el juego con exito
 
 DETALLES
-	° La verificacion de las palabras toma como definicion la seccion etimologia de wiktionari por lo que una palabra
+	Â° La verificacion de las palabras toma como definicion la seccion etimologia de wiktionari por lo que una palabra
     sin esta seccion no mostrara definicion alguna en caso de seleccionar la ayuda de la definicion al jugar
