@@ -6,17 +6,21 @@ INTEGRANTES:
 
 ESPECIFICACIONES SOPA DE LETRAS:
 
-  La sopa de letras comienza con la seleccion de la oficina de la cual tomar la temperatura para cambiar el look and feel
+  La sopa de letras comienza con la selección de la oficina de la cual tomar la temperatura para cambiar el look and feel
 de las ventanas (En este caso el archivo datos-oficinas tiene datos de la oficina1 por lo tanto ingrese esa oficina 
 para probar).
-  Luego pasa a un menu donde se elije si configurar la sopa o jugar, si se elije la opcion de "Configuración" la sopa va a
-llevar al docente a una interfaz de configuracion donde ingresara las palabras, la orientacion, etc. Una vez hecho esto
-generara un archivo json con la configuracion y generará la sopa para jugar. 
-Al seleccionar la opcion "Jugar" utilizara el archivo con la configuracion para generar la sopa, en caso de no existir dicho archivo lo llevará a la interfaz de configuración.
-  Una vez generada la sopa se podra seleccionar el color para pintar las letras, pudiendo ser borrada la seleccion en
-caso de cometer un error. Al finalizar se podra pulsar el boton "Termine", el cual mostrara en pantalla las palabras
-que faltaron encontrar, en caso de faltar alguna, o un mensaje de felicitacion en caso de completar el juego con exito
+  Luego pasa a un menú donde se elige si configurar la sopa o jugar, si se elige la opción de "Configuración" la sopa va a
+llevar al docente a una interfaz de configuración donde podrá ingresar la cantidad de palabras, las palabras, la orientación, etc. Una vez hecho esto generará un archivo json con la configuración y generará la sopa para jugar. Si selecciona la opción "Jugar" utilizará el archivo con la configuración para generar la sopa, en caso de no existir dicho archivo lo llevará a la interfaz de configuración.
+  Una vez generada la sopa se podrá seleccionar el color para pintar las letras, pudiendo ser borrada la selección al volver a hacer clic en la letra. 
+  Al finalizar se podrá pulsar el botón "Termine", el cual mostrará en pantalla las palabras que faltaron encontrar, en caso de faltar alguna, o un mensaje de felicitación en caso de completar el juego con éxito.
 
 DETALLES
-	° La verificacion de las palabras toma como definicion la seccion etimologia de wiktionari por lo que una palabra
-    sin esta seccion no mostrara definicion alguna en caso de seleccionar la ayuda de la definicion al jugar
+	° La verificación de las palabras toma como definición la sección etimología de Wikcionario por lo que una palabra
+    sin esta sección es ingresada se pedirá que ingrese una definición.
+    
+
+AYUDA PARA PRUEBA:
+
+ Las palabras que más se han utilizado para pruebas fueron "lagarto" (sustantivo), "feo" (adjetivo) y "correr" (adjetivo).
+
+
