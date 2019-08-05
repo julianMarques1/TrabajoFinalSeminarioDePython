@@ -9,10 +9,10 @@ ESPECIFICACIONES SOPA DE LETRAS:
   La sopa de letras comienza con la seleccion de la oficina de la cual tomar la temperatura para cambiar el look and feel
 de las ventanas (En este caso el archivo datos-oficinas tiene datos de la oficina1 por lo tanto ingrese esa oficina 
 para probar).
-  Luego pasa a un menu donde se elije si configurar la sopa o jugar, si se elije la opcion de configurar la sopa va a
+  Luego pasa a un menu donde se elije si configurar la sopa o jugar, si se elije la opcion de "Configuración" la sopa va a
 llevar al docente a una interfaz de configuracion donde ingresara las palabras, la orientacion, etc. Una vez hecho esto
-generara un archivo.json con la configuracion y retornara al menu. Al seleccionar la opcion jugar utilizara el
-archivo con la configuracion para generar la sopa.
+generara un archivo json con la configuracion y generará la sopa para jugar. 
+Al seleccionar la opcion "Jugar" utilizara el archivo con la configuracion para generar la sopa, en caso de no existir dicho archivo lo llevará a la interfaz de configuración.
   Una vez generada la sopa se podra seleccionar el color para pintar las letras, pudiendo ser borrada la seleccion en
 caso de cometer un error. Al finalizar se podra pulsar el boton "Termine", el cual mostrara en pantalla las palabras
 que faltaron encontrar, en caso de faltar alguna, o un mensaje de felicitacion en caso de completar el juego con exito
